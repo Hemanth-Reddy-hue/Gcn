@@ -24,9 +24,11 @@ class GCNWithHidden(nn.Module):
         super().__init__()
         self.gcn1=GCNLayer(in_features,hidden_features)
         self.gcn2=GCNLayer(hidden_features,out_features)
+        self.droupout=nn.Dropout(p=0.5)
 
     def forward(self,X,A):
         H=F.relu(self.gcn1(X,A))
+        H=self.droupout(H)
         return self.gcn2(H,A)
 
 # ------------------ DATASET PREP ------------------ #
@@ -62,7 +64,7 @@ def validate(features, adj, labels, train_mask, val_mask):
         for h in hds:
             print("in validation")
             model = GCNWithHidden(features.shape[1],h,labels.max().item()+1)
-            optimizer=optim.Adam(model.parameters(),lr=lr)
+            optimizer=optim.Adam(model.parameters(),lr=lr,weight_decay=5e-4)
             loss_fn=nn.CrossEntropyLoss()
 
             for epoch in range(200):
@@ -87,7 +89,7 @@ def validate(features, adj, labels, train_mask, val_mask):
 # ------------------ TRAINING ------------------ #
 def train(features, adj, labels, train_mask, val_mask, lr, h, epochs=300):
     model = GCNWithHidden(features.shape[1],h,labels.max().item()+1)
-    optimizer=optim.Adam(model.parameters(),lr=lr)
+    optimizer=optim.Adam(model.parameters(),lr=lr,weight_decay=5e-4)
     loss_fn=nn.CrossEntropyLoss()
 
     train_losses, val_accs = [], []
